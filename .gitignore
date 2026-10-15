@@ -1,0 +1,14 @@
+node_modules/
+.env
+*.db
+*.db-wal
+*.db-shm
+*.sqlite*
+*.apk
+*.zip
+
+# Android build artifacts
+android-app/.gradle/
+android-app/app/build/
+android-app/build/
+android-app/local.properties

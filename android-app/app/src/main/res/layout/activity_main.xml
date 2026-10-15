@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A0A0F"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚡ PayZap Notifier"
+            android:textColor="#6C63FF"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Forwards Paytm payment notifications to your server"
+            android:textColor="#8888AA"
+            android:textSize="13sp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Server URL Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="18dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Server URL (ngrok)"
+                android:textColor="#8888AA"
+                android:textSize="12sp"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/urlInput"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/input_bg"
+                android:hint="https://xxxx.ngrok-free.app"
+                android:textColorHint="#444466"
+                android:textColor="#F0F0F5"
+                android:textSize="14sp"
+                android:fontFamily="monospace"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:inputType="textUri"
+                android:singleLine="true" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+
+                <Button
+                    android:id="@+id/saveBtn"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:text="Save URL"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#6C63FF"
+                    android:textSize="13sp"
+                    android:layout_marginEnd="8dp" />
+
+                <Button
+                    android:id="@+id/testBtn"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:text="Test Connection"
+                    android:textColor="#6C63FF"
+                    android:backgroundTint="#1A1A2E"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Permission Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="18dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Notification Access"
+                android:textColor="#8888AA"
+                android:textSize="12sp"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Grant permission to read Paytm notifications"
+                android:textColor="#F0F0F5"
+                android:textSize="13sp"
+                android:layout_marginBottom="12dp" />
+
+            <Button
+                android:id="@+id/permissionBtn"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:text="Open Notification Settings"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#333355"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Status Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="18dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Status"
+                android:textColor="#8888AA"
+                android:textSize="12sp"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/statusText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#F0F0F5"
+                android:textSize="13sp"
+                android:lineSpacingExtra="4dp" />
+        </LinearLayout>
+
+        <!-- Log Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="18dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Live Log"
+                    android:textColor="#8888AA"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/clearBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:text="Clear"
+                    android:textColor="#8888AA"
+                    android:backgroundTint="#1A1A2E"
+                    android:textSize="11sp"
+                    android:minWidth="60dp"
+                    android:padding="0dp" />
+            </LinearLayout>
+
+            <ScrollView
+                android:id="@+id/logScroll"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:background="#08080D"
+                android:padding="10dp">
+
+                <TextView
+                    android:id="@+id/logText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#00D4AA"
+                    android:textSize="11sp"
+                    android:fontFamily="monospace"
+                    android:lineSpacingExtra="2dp"
+                    android:text="Waiting for events...\n" />
+            </ScrollView>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

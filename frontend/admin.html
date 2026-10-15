@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Axiom — Node Administration</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0f;
+      color: #f0f0f5;
+      padding: 24px;
+    }
+    h1 {
+      font-size: 24px;
+      color: #6c63ff;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      color: #8888aa;
+      font-size: 13px;
+      margin-bottom: 28px;
+    }
+    h2 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #f0f0f5;
+    }
+    .section {
+      background: #111118;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th {
+      text-align: left;
+      color: #8888aa;
+      font-weight: 500;
+      padding: 8px 10px;
+      border-bottom: 1px solid #222;
+      white-space: nowrap;
+    }
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #1a1a22;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .status-PENDING { background: #332d00; color: #ffc107; }
+    .status-PAID { background: #003322; color: #00d4aa; }
+    .status-LATE_PAID { background: #003322; color: #00d4aa; }
+    .status-EXPIRED { background: #220000; color: #ff4757; }
+    .status-MATCHED { background: #003322; color: #00d4aa; }
+    .status-RECEIVED { background: #1a1a2e; color: #8888aa; }
+    .status-PARSE_FAIL { background: #330011; color: #ff4757; }
+    .status-UNMATCHED { background: #330000; color: #ff4757; }
+    .status-DUPLICATE { background: #1a1a2e; color: #666; }
+
+    .row-unmatched { background: #1a0000; }
+    .row-parse-fail { background: #1a0005; }
+    .row-stale { background: #1a1800; }
+
+    .btn-small {
+      padding: 4px 10px;
+      border: 1px solid #6c63ff;
+      background: transparent;
+      color: #6c63ff;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-small:hover { background: #6c63ff; color: #fff; }
+
+    .raw-text {
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #8888aa;
+    }
+    .refresh-info {
+      color: #555;
+      font-size: 11px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Axiom Node Console</h1>
+  <p class="subtitle">Settlement audit log & telemetry — auto-refreshes every 5s</p>
+  <p class="refresh-info" id="lastRefresh"></p>
+
+  <!-- Notifications -->
+  <div class="section">
+    <h2>Recent Notifications (last 20)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th>Amount</th>
+          <th>UTR</th>
+          <th>Matched Order</th>
+          <th>Raw Text</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="notifBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Orders -->
+  <div class="section">
+    <h2>All Orders</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Short ID</th>
+          <th>User</th>
+          <th>Requested</th>
+          <th>Jittered</th>
+          <th>Δ</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>UTR</th>
+        </tr>
+      </thead>
+      <tbody id="ordersBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Wallets -->
+  <div class="section">
+    <h2>Wallets</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Balance</th>
+          <th>Lifetime Topup</th>
+          <th>Last Updated</th>
+        </tr>
+      </thead>
+      <tbody id="walletsBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const API_BASE = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') || window.location.protocol === 'file:')
+      ? ''
+      : 'https://6zv30np3p4.execute-api.ap-south-1.amazonaws.com';
+    function fmt(ts) {
+      if (!ts) return '—';
+      const d = new Date(ts);
+      return d.toLocaleTimeString() + ' ' + d.toLocaleDateString();
+    }
+
+    function badge(status) {
+      return '<span class="status-badge status-' + status + '">' + status + '</span>';
+    }
+
+    function rowClass(status) {
+      if (status === 'UNMATCHED') return 'row-unmatched';
+      if (status === 'PARSE_FAIL') return 'row-parse-fail';
+      return '';
+    }
+
+    function orderRowClass(order) {
+      if (order.status === 'PENDING') {
+        const age = Date.now() - order.createdAt;
+        if (age > 12 * 60 * 1000) return 'row-stale';
+      }
+      return '';
+    }
+
+    async function manualCredit(notifId) {
+      const userName = prompt('Enter userName to credit:');
+      if (!userName) return;
+
+      try {
+        const res = await fetch(API_BASE + '/api/admin/manual-credit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notifId, userName }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert('Credited ₹' + data.credited + ' to ' + userName + '. New balance: ₹' + data.newBalance);
+          refresh();
+        } else {
+          alert('Error: ' + (data.error || 'Unknown error'));
+        }
+      } catch (e) {
+        alert('Network error');
+      }
+    }
+
+    async function refresh() {
+      try {
+        const [notifsRes, ordersRes, walletsRes] = await Promise.all([
+          fetch(API_BASE + '/api/admin/notifications'),
+          fetch(API_BASE + '/api/admin/orders'),
+          fetch(API_BASE + '/api/admin/wallets'),
+        ]);
+
+        const notifs = await notifsRes.json();
+        const orders = await ordersRes.json();
+        const wallets = await walletsRes.json();
+
+        // Notifications
+        const notifBody = document.getElementById('notifBody');
+        notifBody.innerHTML = notifs.slice(0, 20).map(n => {
+          const actionBtn = (n.status === 'UNMATCHED' || n.status === 'PARSE_FAIL')
+            ? '<button class="btn-small" onclick="manualCredit(' + n.id + ')">Manual Credit</button>'
+            : '';
+          return '<tr class="' + rowClass(n.status) + '">'
+            + '<td>' + n.id + '</td>'
+            + '<td>' + fmt(n.receivedAt) + '</td>'
+            + '<td>' + badge(n.status) + '</td>'
+            + '<td>' + (n.parsedAmount != null ? '₹' + n.parsedAmount : '—') + '</td>'
+            + '<td>' + (n.parsedUTR || '—') + '</td>'
+            + '<td>' + (n.matchedOrder || '—') + '</td>'
+            + '<td><div class="raw-text" title="' + escapeAttr(n.rawText) + '">' + escapeHtml(n.rawText) + '</div></td>'
+            + '<td>' + actionBtn + '</td>'
+            + '</tr>';
+        }).join('');
+
+        // Orders
+        const ordersBody = document.getElementById('ordersBody');
+        ordersBody.innerHTML = orders.map(o => {
+          return '<tr class="' + orderRowClass(o) + '">'
+            + '<td>' + o.shortId + '</td>'
+            + '<td>' + escapeHtml(o.userName) + '</td>'
+            + '<td>₹' + o.requestedINR + '</td>'
+            + '<td>₹' + o.amountINR + '</td>'
+            + '<td>' + (o.jitterDelta > 0 ? '+' : '') + o.jitterDelta + '</td>'
+            + '<td>' + badge(o.status) + '</td>'
+            + '<td>' + fmt(o.createdAt) + '</td>'
+            + '<td>' + (o.utrRef || '—') + '</td>'
+            + '</tr>';
+        }).join('');
+
+        // Wallets
+        const walletsBody = document.getElementById('walletsBody');
+        walletsBody.innerHTML = wallets.map(w => {
+          return '<tr>'
+            + '<td>' + escapeHtml(w.userName) + '</td>'
+            + '<td>₹' + w.balanceCredits.toFixed(2) + '</td>'
+            + '<td>₹' + w.lifetimeTopup.toFixed(2) + '</td>'
+            + '<td>' + fmt(w.lastUpdated) + '</td>'
+            + '</tr>';
+        }).join('');
+
+        document.getElementById('lastRefresh').textContent = 'Last refreshed: ' + new Date().toLocaleTimeString();
+      } catch (e) {
+        console.error('Refresh failed:', e);
+      }
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    function escapeAttr(str) {
+      return (str || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    refresh();
+    setInterval(refresh, 5000);
+  </script>
+</body>
+</html>

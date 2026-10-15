@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Axiom — Protocol Client</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0f;
+      color: #f0f0f5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 440px;
+      padding: 24px;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .logo h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #6c63ff;
+      letter-spacing: -0.5px;
+    }
+    .logo p {
+      color: #8888aa;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    .card {
+      background: #111118;
+      border-radius: 12px;
+      padding: 28px;
+      position: relative;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      color: #8888aa;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      background: #0a0a0f;
+      border: 1px solid #222233;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      color: #f0f0f5;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      border-color: #6c63ff;
+    }
+    .usd-equiv {
+      font-size: 12px;
+      color: #8888aa;
+      margin-top: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 18px;
+    }
+    .field-group {
+      margin-bottom: 18px;
+    }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: #6c63ff;
+      color: #fff;
+    }
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #333;
+      color: #f0f0f5;
+    }
+    .btn-outline:hover { border-color: #6c63ff; }
+
+    /* States */
+    .state { display: none; }
+    .state.active { display: block; }
+
+    /* Loading */
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #222;
+      border-top-color: #6c63ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      text-align: center;
+      color: #8888aa;
+      font-size: 14px;
+    }
+
+    /* QR */
+    .qr-card {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+    .qr-card canvas, .qr-card img {
+      width: 280px;
+      height: 280px;
+      border-radius: 8px;
+      margin: 0 auto 16px;
+      display: block;
+    }
+    .jittered-amount {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 48px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .amount-warning {
+      color: #ff4757;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .original-note {
+      color: #8888aa;
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+    .countdown {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      color: #f0f0f5;
+      margin-bottom: 12px;
+    }
+    .pulse-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #6c63ff;
+      border-radius: 50%;
+      animation: pulse 1.5s ease-in-out infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+    .waiting-text {
+      color: #8888aa;
+      font-size: 13px;
+    }
+
+    /* Success */
+    .success-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #00d4aa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      animation: popIn 0.4s ease;
+    }
+    @keyframes popIn {
+      0% { transform: scale(0); }
+      70% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .success-icon svg { width: 32px; height: 32px; }
+    .success-title {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: #00d4aa;
+      margin-bottom: 8px;
+    }
+    .success-detail {
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      color: #f0f0f5;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .balance-display {
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 24px;
+      color: #6c63ff;
+      margin: 16px 0;
+    }
+
+    /* Expired / Error */
+    .expired-title, .error-title {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .expired-title { color: #ff4757; }
+    .error-title { color: #ff4757; }
+    .expired-msg, .error-msg {
+      text-align: center;
+      color: #8888aa;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <h1>Axiom</h1>
+      <p>An ε-Jitter Protocol for Zero-Middleware Settlement</p>
+    </div>
+
+    <div class="card">
+      <!-- IDLE state -->
+      <div id="state-idle" class="state active">
+        <div class="field-group">
+          <label for="userName">Your Name</label>
+          <input type="text" id="userName" placeholder="e.g. TestUser" autocomplete="off">
+        </div>
+        <div class="field-group">
+          <label for="amountINR">Amount (INR)</label>
+          <input type="number" id="amountINR" placeholder="100" min="1" max="10000" step="1">
+          <div class="usd-equiv" id="usdEquiv"></div>
+        </div>
+        <button class="btn btn-primary" id="btnGenerate">Generate QR</button>
+      </div>
+
+      <!-- LOADING state -->
+      <div id="state-loading" class="state">
+        <div class="spinner"></div>
+        <p class="loading-text">Generating your QR...</p>
+      </div>
+
+      <!-- QR_SHOWN state -->
+      <div id="state-qr" class="state">
+        <div class="qr-card">
+          <div id="qrContainer"></div>
+          <div class="jittered-amount" id="displayAmount"></div>
+          <div class="amount-warning" id="amountWarning"></div>
+          <div class="original-note" id="originalNote"></div>
+          <div class="countdown" id="countdown"></div>
+          <div class="waiting-text"><span class="pulse-dot"></span>Waiting for payment...</div>
+        </div>
+      </div>
+
+      <!-- SUCCESS state -->
+      <div id="state-success" class="state">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="success-title">Payment Received!</div>
+        <div class="success-detail" id="successAmount"></div>
+        <div class="balance-display" id="successBalance"></div>
+        <button class="btn btn-outline" onclick="setState('IDLE')" style="margin-top: 12px;">Make Another Payment</button>
+      </div>
+
+      <!-- EXPIRED state -->
+      <div id="state-expired" class="state">
+        <div class="expired-title">QR Expired</div>
+        <p class="expired-msg">The payment window has closed. Please generate a new QR code.</p>
+        <button class="btn btn-outline" onclick="setState('IDLE')">Try Again</button>
+      </div>
+
+      <!-- ERROR state -->
+      <div id="state-error" class="state">
+        <div class="error-title">Something went wrong</div>
+        <p class="error-msg" id="errorMsg"></p>
+        <button class="btn btn-outline" onclick="setState('IDLE')">Retry</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="qrcode.min.js"></script>
+  <script>
+    // Dynamically detect local vs cloud environment
+    const API_BASE = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') || window.location.protocol === 'file:')
+      ? ''
+      : 'https://6zv30np3p4.execute-api.ap-south-1.amazonaws.com';
+    // State machine
+    const STATES = ['IDLE', 'LOADING', 'QR_SHOWN', 'SUCCESS', 'EXPIRED', 'ERROR'];
+    const stateElements = {
+      IDLE: document.getElementById('state-idle'),
+      LOADING: document.getElementById('state-loading'),
+      QR_SHOWN: document.getElementById('state-qr'),
+      SUCCESS: document.getElementById('state-success'),
+      EXPIRED: document.getElementById('state-expired'),
+      ERROR: document.getElementById('state-error'),
+    };
+
+    let currentState = 'IDLE';
+    let currentOrder = null;
+    let pollInterval = null;
+    let countdownInterval = null;
+    let exchangeRate = null;
+
+    function setState(newState, data) {
+      // Clean up timers
+      if (newState !== 'QR_SHOWN') {
+        clearInterval(pollInterval);
+        clearInterval(countdownInterval);
+        pollInterval = null;
+        countdownInterval = null;
+      }
+
+      // Hide all
+      STATES.forEach(s => stateElements[s].classList.remove('active'));
+      // Show target
+      stateElements[newState].classList.add('active');
+      currentState = newState;
+
+      if (newState === 'QR_SHOWN' && data) {
+        renderQR(data);
+      }
+      if (newState === 'SUCCESS' && data) {
+        renderSuccess(data);
+      }
+      if (newState === 'ERROR' && data) {
+        document.getElementById('errorMsg').textContent = data.message || 'Unknown error';
+      }
+    }
+
+    function renderQR(data) {
+      currentOrder = data;
+      const qrContainer = document.getElementById('qrContainer');
+      qrContainer.innerHTML = '';
+
+      if (data.qrDataUrl) {
+        const img = document.createElement('img');
+        img.src = data.qrDataUrl;
+        img.alt = 'UPI QR Code';
+        img.style.width = '280px';
+        img.style.height = '280px';
+        img.style.margin = '0 auto 16px';
+        img.style.display = 'block';
+        img.style.borderRadius = '8px';
+        qrContainer.appendChild(img);
+      } else if (data.upiLink && typeof QRCode !== 'undefined') {
+        new QRCode(qrContainer, {
+          text: data.upiLink,
+          width: 280,
+          height: 280,
+          colorDark: '#000000',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }
+      document.getElementById('displayAmount').textContent = '₹' + data.jitteredAmount.toFixed(2);
+      document.getElementById('amountWarning').textContent =
+        'Pay EXACTLY ₹' + data.jitteredAmount.toFixed(2) + ' — do not change the amount';
+
+      if (data.jitterDelta !== 0) {
+        document.getElementById('originalNote').textContent =
+          'Your ₹' + data.originalAmount + ' order will be credited in full';
+      } else {
+        document.getElementById('originalNote').textContent = '';
+      }
+
+      // Countdown
+      startCountdown(data.expiresAt);
+      // Polling
+      startPolling(data.orderId);
+    }
+
+    function renderSuccess(data) {
+      document.getElementById('successAmount').textContent =
+        '₹' + (currentOrder ? currentOrder.originalAmount : '?') + ' credited to your wallet';
+      document.getElementById('successBalance').textContent =
+        'Balance: ₹' + (data.balanceCredits || 0).toFixed(2);
+    }
+
+    function startCountdown(expiresAt) {
+      const el = document.getElementById('countdown');
+      function update() {
+        const remaining = Math.max(0, expiresAt - Date.now());
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          setState('EXPIRED');
+          return;
+        }
+        const mins = Math.floor(remaining / 60000);
+        const secs = Math.floor((remaining % 60000) / 1000);
+        el.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+      }
+      update();
+      countdownInterval = setInterval(update, 1000);
+    }
+
+    function startPolling(orderId) {
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(API_BASE + '/api/order/' + orderId + '/status');
+          const data = await res.json();
+          if (data.status === 'PAID' || data.status === 'LATE_PAID') {
+            setState('SUCCESS', data);
+          } else if (data.status === 'EXPIRED') {
+            setState('EXPIRED');
+          }
+        } catch (e) {
+          // Ignore transient fetch errors
+        }
+      }, 3000);
+    }
+
+    // Exchange rate for live USD display
+    async function fetchRate() {
+      try {
+        const res = await fetch(API_BASE + '/api/exchange-rate');
+        const data = await res.json();
+        exchangeRate = data.rate;
+      } catch (e) {
+        exchangeRate = 0.012;
+      }
+    }
+    fetchRate();
+
+    const amountInput = document.getElementById('amountINR');
+    const usdEquiv = document.getElementById('usdEquiv');
+
+    amountInput.addEventListener('input', () => {
+      const val = parseFloat(amountInput.value);
+      if (!isNaN(val) && val > 0 && exchangeRate) {
+        usdEquiv.textContent = '≈ $' + (val * exchangeRate).toFixed(2) + ' USD';
+      } else {
+        usdEquiv.textContent = '';
+      }
+    });
+
+    // Generate QR
+    document.getElementById('btnGenerate').addEventListener('click', async () => {
+      const userName = document.getElementById('userName').value.trim();
+      const amountINR = parseFloat(amountInput.value);
+
+      if (!userName) {
+        return setState('ERROR', { message: 'Please enter your name' });
+      }
+      if (isNaN(amountINR) || amountINR < 1 || amountINR > 10000) {
+        return setState('ERROR', { message: 'Amount must be between ₹1 and ₹10,000' });
+      }
+
+      setState('LOADING');
+
+      try {
+        const res = await fetch(API_BASE + '/api/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amountINR, userName }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (data.error === 'BUSY') {
+            // All jitter slots taken — auto-retry in 30s
+            let secs = 30;
+            setState('ERROR', { message: `All payment slots busy. Retrying in ${secs}s...` });
+            const retryInterval = setInterval(() => {
+              secs--;
+              if (secs <= 0) {
+                clearInterval(retryInterval);
+                document.getElementById('btnGenerate').click();
+                return;
+              }
+              document.getElementById('errorMsg').textContent = `All payment slots busy. Retrying in ${secs}s...`;
+            }, 1000);
+            return;
+          }
+          return setState('ERROR', { message: data.message || data.error || 'Failed to create order' });
+        }
+
+        setState('QR_SHOWN', data);
+      } catch (e) {
+        setState('ERROR', { message: 'Network error. Please try again.' });
+      }
+    });
+  </script>
+</body>
+</html>
