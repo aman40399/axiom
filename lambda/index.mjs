@@ -18,15 +18,15 @@ const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const TELEGRAM_CHAT = process.env.TELEGRAM_CHAT_ID || '';
 
 // Table names
-const T_ORDERS = 'payzap-orders';
-const T_WALLETS = 'payzap-wallets';
-const T_LEDGER = 'payzap-ledger';
-const T_NOTIFS = 'payzap-notifications';
+const T_ORDERS = 'axiom-orders';
+const T_WALLETS = 'axiom-wallets';
+const T_LEDGER = 'axiom-ledger';
+const T_NOTIFS = 'axiom-notifications';
 
 // ── CORS headers ──
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type,X-PayZap-Source,ngrok-skip-browser-warning',
+  'Access-Control-Allow-Headers': 'Content-Type,X-Axiom-Source,ngrok-skip-browser-warning',
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
   'Content-Type': 'application/json',
 };

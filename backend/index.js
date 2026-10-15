@@ -204,7 +204,7 @@ app.post('/webhook/telegram', async (req, res) => {
 app.post('/webhook/notification', async (req, res) => {
   try {
     const { text, isTest } = req.body || {};
-    const source = req.headers['x-axiom-source'] || req.headers['x-payzap-source'] || 'IngestionRelay';
+    const source = req.headers['x-axiom-source'] || 'IngestionRelay';
     await handleIncomingNotification(db, { text, source, isTest });
   } catch (err) {
     console.error('[Webhook/Notification] Ingestion error:', err);
